@@ -1,7 +1,7 @@
 import os
 import time
 
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 from const import IMAGES_DIR
 from lib import epd13in3E
@@ -13,6 +13,36 @@ EPD_WIDTH = 1200
 EPD_HEIGHT = 1600
 
 screen = epd13in3E.EPD()
+
+
+def enhance_colors(image, brightness=1.1, contrast=1.2, saturation=1.5):
+    """
+    Enhance an image for e-ink display to make colors pop.
+
+    Args:
+        image (PIL.Image.Image): Input RGB image.
+        brightness (float): Brightness factor (>1 brighter, <1 darker)
+        contrast (float): Contrast factor (>1 stronger, <1 weaker)
+        saturation (float): Color saturation factor (>1 more saturated)
+
+    Returns:
+        PIL.Image.Image: Enhanced image
+    """
+    img = image.convert("RGB")
+
+    # Adjust brightness
+    enhancer = ImageEnhance.Brightness(img)
+    img = enhancer.enhance(brightness)
+
+    # Adjust contrast
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(contrast)
+
+    # Adjust saturation (color)
+    enhancer = ImageEnhance.Color(img)
+    img = enhancer.enhance(saturation)
+
+    return img
 
 
 def resize_for_spectra6(image):
@@ -64,7 +94,9 @@ try:
     # Reading Image
     print("Drawing test.JPEG")
     image = Image.open(os.path.join(IMAGES_DIR, 'test.JPEG'))
-    screen.display(screen.getbuffer(resize_for_spectra6(image)))
+    image = enhance_colors(image)
+    image = resize_for_spectra6(image)
+    screen.display(screen.getbuffer(image))
 
     print("Waiting 30 seconds before clearing")
     time.sleep(30)

@@ -12,3 +12,8 @@ Add:
 gpio=7=op,dl
 gpio=8=op,dl
 ```
+
+
+## Stupid Wi-Fi fix
+
+`echo brcmfmac | sudo tee -a /etc/modules`
