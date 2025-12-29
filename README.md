@@ -1,5 +1,6 @@
 ### Set up UV
-`pip3 install uv`
+
+Install UV: `sudo curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ### Config.txt
 

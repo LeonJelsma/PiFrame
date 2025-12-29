@@ -27,48 +27,46 @@
 # THE SOFTWARE.
 #
 import time
-import epdconfig
 
-import PIL
 from PIL import Image
-import io
 
-EPD_WIDTH       = 1200
-EPD_HEIGHT      = 1600
+from lib import epdconfig
+
+EPD_WIDTH = 1200
+EPD_HEIGHT = 1600
+
 
 class EPD():
     def __init__(self):
         self.width = EPD_WIDTH
         self.height = EPD_HEIGHT
 
-        self.BLACK  = 0x000000   #   0000  BGR
-        self.WHITE  = 0xffffff   #   0001
-        self.YELLOW = 0x00ffff   #   0010
-        self.RED    = 0x0000ff   #   0011
-        self.BLUE   = 0xff0000   #   0101
-        self.GREEN  = 0x00ff00   #   0110
-        
-        self.EPD_CS_M_PIN  = epdconfig.EPD_CS_M_PIN
-        self.EPD_CS_S_PIN  = epdconfig.EPD_CS_S_PIN
+        self.BLACK = 0x000000  # 0000  BGR
+        self.WHITE = 0xffffff  # 0001
+        self.YELLOW = 0x00ffff  # 0010
+        self.RED = 0x0000ff  # 0011
+        self.BLUE = 0xff0000  # 0101
+        self.GREEN = 0x00ff00  # 0110
 
-        self.EPD_DC_PIN  = epdconfig.EPD_DC_PIN
-        self.EPD_RST_PIN  = epdconfig.EPD_RST_PIN
-        self.EPD_BUSY_PIN  = epdconfig.EPD_BUSY_PIN
-        self.EPD_PWR_PIN  = epdconfig.EPD_PWR_PIN
+        self.EPD_CS_M_PIN = epdconfig.EPD_CS_M_PIN
+        self.EPD_CS_S_PIN = epdconfig.EPD_CS_S_PIN
 
+        self.EPD_DC_PIN = epdconfig.EPD_DC_PIN
+        self.EPD_RST_PIN = epdconfig.EPD_RST_PIN
+        self.EPD_BUSY_PIN = epdconfig.EPD_BUSY_PIN
+        self.EPD_PWR_PIN = epdconfig.EPD_PWR_PIN
 
-    
     def Reset(self):
-        epdconfig.digital_write(self.EPD_RST_PIN, 1) 
-        time.sleep(0.03) 
-        epdconfig.digital_write(self.EPD_RST_PIN, 0) 
-        time.sleep(0.03) 
-        epdconfig.digital_write(self.EPD_RST_PIN, 1) 
-        time.sleep(0.03) 
-        epdconfig.digital_write(self.EPD_RST_PIN, 0) 
-        time.sleep(0.03) 
-        epdconfig.digital_write(self.EPD_RST_PIN, 1) 
-        time.sleep(0.03) 
+        epdconfig.digital_write(self.EPD_RST_PIN, 1)
+        time.sleep(0.03)
+        epdconfig.digital_write(self.EPD_RST_PIN, 0)
+        time.sleep(0.03)
+        epdconfig.digital_write(self.EPD_RST_PIN, 1)
+        time.sleep(0.03)
+        epdconfig.digital_write(self.EPD_RST_PIN, 0)
+        time.sleep(0.03)
+        epdconfig.digital_write(self.EPD_RST_PIN, 1)
+        time.sleep(0.03)
 
     def CS_ALL(self, Value):
         epdconfig.digital_write(self.EPD_CS_M_PIN, Value)
@@ -79,13 +77,13 @@ class EPD():
 
     def SendData(self, Data):
         epdconfig.spi_writebyte(Data)
-    
+
     def SendData2(self, buf, Len):
         epdconfig.spi_writebyte2(buf, Len)
 
     def ReadBusyH(self):
         print("e-Paper busy H")
-        while(epdconfig.digital_read(self.EPD_BUSY_PIN) == 0):      # 0: busy, 1: idle
+        while (epdconfig.digital_read(self.EPD_BUSY_PIN) == 0):  # 0: busy, 1: idle
             epdconfig.delay_ms(5)
         print("e-Paper busy H release")
 
@@ -115,8 +113,8 @@ class EPD():
     def Init(self):
         print("EPD init...")
         epdconfig.module_init()
-        
-        self.Reset() 
+
+        self.Reset()
         self.ReadBusyH()
 
         epdconfig.digital_write(self.EPD_CS_M_PIN, 0)
@@ -223,18 +221,19 @@ class EPD():
         self.SendCommand(0xB1)
         self.SendData(0x02)
         self.CS_ALL(1)
-    
+
     def getbuffer(self, image):
         # Create a pallette with the 7 colors supported by the panel
-        pal_image = Image.new("P", (1,1))
-        pal_image.putpalette( (0,0,0,  255,255,255,  255,255,0,  255,0,0,  0,0,0,  0,0,255,  0,255,0) + (0,0,0)*249)
+        pal_image = Image.new("P", (1, 1))
+        pal_image.putpalette(
+            (0, 0, 0, 255, 255, 255, 255, 255, 0, 255, 0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 0) + (0, 0, 0) * 249)
         # pal_image.putpalette( (0,0,0,  255,255,255,  0,255,0,   0,0,255,  255,0,0,  255,255,0, 255,128,0) + (0,0,0)*249)
 
         # Check if we need to rotate the image
         imwidth, imheight = image.size
-        if(imwidth == self.width and imheight == self.height):
+        if (imwidth == self.width and imheight == self.height):
             image_temp = image
-        elif(imwidth == self.height and imheight == self.width):
+        elif (imwidth == self.height and imheight == self.width):
             image_temp = image.rotate(90, expand=True)
         else:
             print("Invalid image dimensions: %d x %d, expected %d x %d" % (imwidth, imheight, self.width, self.height))
@@ -248,39 +247,39 @@ class EPD():
         buf = [0x00] * int(self.width * self.height / 2)
         idx = 0
         for i in range(0, len(buf_7color), 2):
-            buf[idx] = (buf_7color[i] << 4) + buf_7color[i+1]
+            buf[idx] = (buf_7color[i] << 4) + buf_7color[i + 1]
             idx += 1
-            
+
         return buf
-    
+
     def Clear(self, color=0x11):
         epdconfig.digital_write(self.EPD_CS_M_PIN, 0)
         self.SendCommand(0x10)
         for i in range(self.height):
-            self.SendData2([color]* int(self.width/2), int(self.width/2))
+            self.SendData2([color] * int(self.width / 2), int(self.width / 2))
         self.CS_ALL(1)
         epdconfig.digital_write(self.EPD_CS_S_PIN, 0)
         self.SendCommand(0x10)
         for i in range(self.height):
-            self.SendData2([color]* int(self.width/2), int(self.width/2))
+            self.SendData2([color] * int(self.width / 2), int(self.width / 2))
         self.CS_ALL(1)
 
         self.TurnOnDisplay()
 
     def display(self, image):
-        Width =int(self.width / 4)
-        Width1 =int(self.width / 2)
+        Width = int(self.width / 4)
+        Width1 = int(self.width / 2)
 
         epdconfig.digital_write(self.EPD_CS_M_PIN, 0)
         self.SendCommand(0x10)
         for i in range(self.height):
-            self.SendData2(image[i * Width1 : i * Width1+Width], Width)
+            self.SendData2(image[i * Width1: i * Width1 + Width], Width)
         self.CS_ALL(1)
 
         epdconfig.digital_write(self.EPD_CS_S_PIN, 0)
         self.SendCommand(0x10)
         for i in range(self.height):
-            self.SendData2(image[i * Width1+Width : i * Width1+Width1], Width)
+            self.SendData2(image[i * Width1 + Width: i * Width1 + Width1], Width)
         self.CS_ALL(1)
 
         self.TurnOnDisplay()
@@ -294,5 +293,3 @@ class EPD():
         epdconfig.delay_ms(2000)
         epdconfig.module_exit()
 ### END OF FILE ###
-
-
