@@ -1,0 +1,1 @@
+Copied from examples provided by WaveShare: https://www.waveshare.com/wiki/13.3inch_e-Paper_HAT+_(E)_Manual#Raspberry_Pi
