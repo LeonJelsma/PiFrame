@@ -9,26 +9,27 @@ from lib import epd13in3E
 if not os.path.exists(IMAGES_DIR):
     os.makedirs(IMAGES_DIR)
 
-epd = epd13in3E.EPD()
+screen = epd13in3E.EPD()
+
+
 try:
-    epd.Init()
+    screen.Init()
     print("clearing...")
-    epd.Clear()
+    screen.Clear()
 
-    # Drawing on the image
-    print("1.Drawing on the image...")
-
-    # read bmp file
-    print("2.read bmp file")
+    # Reading Image
+    print("Drawing test.JPEG")
     Himage = Image.open(os.path.join(IMAGES_DIR, 'test.JPEG'))
-    epd.display(epd.getbuffer(Himage))
+    screen.display(screen.getbuffer(Himage))
+
+    print("Waiting 30 seconds before clearing")
     time.sleep(30)
 
     print("clearing...")
-    epd.Clear()
+    screen.Clear()
 
-    print("goto sleep...")
-    epd.sleep()
-except:
-    print("goto sleep...")
-    epd.sleep()
+    print("Going to sleep...")
+    screen.sleep()
+except Exception as e:
+    print(f"Encountered error, going to sleep: {e}")
+    screen.sleep()
