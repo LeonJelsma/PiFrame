@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 
 import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw
@@ -112,28 +113,34 @@ def count_images(path: str, recursive: bool = False) -> int:
     return count
 
 
-def image_generator(path: str):
+def image_generator(path: str, shuffle=True):
     """
     Generator that yields PIL.Image objects for every image found in `path`.
 
     Args:
         path (str): directory to read images from
-        recursive (bool): include subdirectories if True
+        shuffle (bool): randomize order if True
     """
     image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff"}
 
-    for file in os.listdir(path):
-        ext = os.path.splitext(file)[1].lower()
-        if ext in image_extensions:
-            full_path = os.path.join(path, file)
-            try:
-                image = Image.open(full_path)
-                copy = image.copy()
-                image.close()
+    # Collect all image files first
+    files = [
+        os.path.join(path, f)
+        for f in os.listdir(path)
+        if os.path.splitext(f)[1].lower() in image_extensions
+    ]
 
-                yield copy, full_path
-            except Exception as e:
-                print(f"⚠️ Skipping {file}: {e}")
+    if shuffle:
+        random.shuffle(files)
+
+    for full_path in files:
+        try:
+            image = Image.open(full_path)
+            copy = image.copy()
+            image.close()
+            yield copy, full_path
+        except Exception as e:
+            print(f"⚠️ Skipping {full_path}: {e}")
 
 
 def force_portrait(img: Image.Image) -> Image.Image:
@@ -155,22 +162,29 @@ def force_portrait(img: Image.Image) -> Image.Image:
 def add_metadata_overlay(img: Image.Image, image_path: str) -> Image.Image:
     """
     Reads EXIF date and GPS location from a PIL image,
-    and draws it in the bottom-right corner.
+    and draws it in the bottom-right corner with two lines:
+    - Date on top
+    - Address (from GPS) below
     """
     img = img.copy()
-    draw = ImageDraw.Draw(img)
+    draw = ImageDraw.Draw(img, 'RGBA')
 
-    # Try to load a simple font
+    # --- Font setup ---
     try:
-        font = ImageFont.truetype(os.path.join(FONTS_DIR, 'FunnelSans-VariableFont_wght.ttf'), 18)
-    except:
+        font_date = ImageFont.truetype(
+            os.path.join(FONTS_DIR, 'FunnelSans-VariableFont_wght.ttf'), 28
+        )
+        font_address = ImageFont.truetype(
+            os.path.join(FONTS_DIR, 'FunnelSans-VariableFont_wght.ttf'), 24
+        )
+    except Exception:
         logger.error("Failed to load font, using system default")
-        font = ImageFont.load_default()
+        font_date = font_address = ImageFont.load_default()
 
     date_str = ""
     gps_str = ""
 
-    # Extract EXIF
+    # --- Extract EXIF ---
     try:
         exif_dict = piexif.load(image_path)
 
@@ -199,26 +213,48 @@ def add_metadata_overlay(img: Image.Image, image_path: str) -> Image.Image:
             if lat and lat_ref and lon and lon_ref:
                 lat_val = dms_to_deg(lat, lat_ref)
                 lon_val = dms_to_deg(lon, lon_ref)
-                gps_str = coords_to_address(lat_val, lon_val)
+                gps_str = coords_to_address(lat_val, lon_val)  # your reverse geocoding function
 
     except Exception as e:
-        print(f"Failed to read EXIF metadata: {e}")
+        logger.warning(f"Failed to read EXIF metadata: {e}")
 
-    text = f"{date_str} {gps_str}".strip()
-    if text:
-        # Draw semi-transparent rectangle for readability
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+    # --- Draw overlay if we have any text ---
+    lines = []
+    if date_str:
+        lines.append(date_str)
+    if gps_str:
+        lines.append(gps_str)
 
-        padding = 4
-        x = img.width - text_width - padding
-        y = img.height - text_height - padding
+    if not lines:
+        return img
 
-        draw.rectangle(
-            [(x - padding, y - padding), (img.width, img.height)],
-            fill=(255, 255, 255, 128)  # white background
-        )
-        draw.text((x, y), text, fill=(0, 0, 0), font=font)
+    # Measure text sizes
+    padding = 10
+    line_spacing = 6
+    line_sizes = [
+        draw.textbbox((0, 0), line, font=font_date if i == 0 else font_address)
+        for i, line in enumerate(lines)
+    ]
+    widths = [bbox[2] - bbox[0] for bbox in line_sizes]
+    heights = [bbox[3] - bbox[1] for bbox in line_sizes]
+
+    box_width = max(widths) + 2 * padding
+    box_height = sum(heights) + (len(lines) - 1) * line_spacing + 2 * padding
+
+    # Position at bottom-right corner
+    x0 = img.width - box_width - padding
+    y0 = img.height - box_height - padding
+    x1 = x0 + box_width
+    y1 = y0 + box_height
+
+    # Draw semi-transparent rectangle
+    draw.rectangle([x0, y0, x1, y1], fill=(255, 255, 255, 200))  # alpha=200
+
+    # Draw text lines
+    y_text = y0 + padding
+    for i, line in enumerate(lines):
+        font = font_date if i == 0 else font_address
+        draw.text((x0 + padding, y_text), line, fill=(0, 0, 0), font=font)
+        y_text += heights[i] + line_spacing
 
     return img
