@@ -113,34 +113,36 @@ def count_images(path: str, recursive: bool = False) -> int:
     return count
 
 
-def image_generator(path: str, shuffle=True):
+def get_random_image(path: str):
     """
-    Generator that yields PIL.Image objects for every image found in `path`.
+    Return a single random image from the directory, along with its full path.
 
     Args:
-        path (str): directory to read images from
-        shuffle (bool): randomize order if True
+        path (str): Directory to read images from
+
+    Returns:
+        tuple: (PIL.Image object, full_path) or (None, None) if no images found
     """
     image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff"}
 
-    # Collect all image files first
     files = [
         os.path.join(path, f)
         for f in os.listdir(path)
         if os.path.splitext(f)[1].lower() in image_extensions
     ]
 
-    if shuffle:
-        random.shuffle(files)
+    if not files:
+        return None, None
 
-    for full_path in files:
-        try:
-            image = Image.open(full_path)
-            copy = image.copy()
-            image.close()
-            yield copy, full_path
-        except Exception as e:
-            print(f"⚠️ Skipping {full_path}: {e}")
+    full_path = random.choice(files)
+    try:
+        image = Image.open(full_path)
+        copy = image.copy()
+        image.close()
+        return copy, full_path
+    except Exception as e:
+        print(f"⚠️ Failed to open {full_path}: {e}")
+        return None, None
 
 
 def correct_image_orientation(image: Image.Image, image_path: str) -> Image.Image:

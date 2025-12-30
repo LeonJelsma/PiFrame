@@ -3,7 +3,8 @@ import time
 
 from const import IMAGES_DIR, IMAGE_DELAY_SECONDS
 from lib import epd13in3E
-from utils.image_utils import enhance_colors, resize_for_spectra6, image_generator, correct_image_orientation, add_metadata_overlay
+from utils.image_utils import enhance_colors, resize_for_spectra6, correct_image_orientation, \
+    get_random_image
 
 screen = epd13in3E.EPD()
 
@@ -20,20 +21,31 @@ try:
     screen.Init()
     screen.Clear()
 
-    for image, image_path in image_generator(IMAGES_DIR):
-        logger.info("Drawing next image...")
+    while True:
+        image, image_path = get_random_image(IMAGES_DIR)
+        if image is None:
+            print("No images found, waiting...")
+            time.sleep(5)
+            continue
+
+        logger.info(f"Drawing next image: {image_path}")
 
         # Prepare image
         image = correct_image_orientation(image, image_path)
         image = enhance_colors(image)
         image = resize_for_spectra6(image)
-        image = add_metadata_overlay(image, image_path)
+
+        # image = add_metadata_overlay(image, image_path)
 
         screen.display(screen.get_buffer(image))
+
+        # Free up memory
+        del image
 
         logger.info(f"Done, waiting {IMAGE_DELAY_SECONDS} seconds")
         time.sleep(IMAGE_DELAY_SECONDS)
 
+    # This should not be reachable!
     logger.info("Out of images, clearing screen...")
     screen.Clear()
 

@@ -33,6 +33,17 @@ Add following line to `/etc/fstab` for persisting NFS share:\
 
 `git clone https://github.com/LeonJelsma/PiFrame.git`
 
-### 6. (Optional) Stupid Wi-Fi fix
+### 6. Set up Systemd service
+
+Copy contents of `piframe.service` to `/etc/systemd/system/piframe.service`
+
+Then:
+```
+sudo systemctl daemon-reload
+sudo systemctl enable piframe.service
+sudo systemctl start piframe.service
+```
+
+### 7. (Optional) Stupid Wi-Fi fix
 
 `echo brcmfmac | sudo tee -a /etc/modules`
