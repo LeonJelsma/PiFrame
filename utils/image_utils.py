@@ -3,7 +3,7 @@ import os
 import random
 
 import piexif
-from PIL import Image, ImageEnhance, ImageFont, ImageDraw
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ExifTags
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR
 from utils.open_street_map_utils import coords_to_address
@@ -143,20 +143,42 @@ def image_generator(path: str, shuffle=True):
             print(f"⚠️ Skipping {full_path}: {e}")
 
 
-def force_portrait(img: Image.Image) -> Image.Image:
+def correct_image_orientation(image: Image.Image) -> Image.Image:
     """
-    Rotate image so that the *shorter side* is vertical (portrait)
-    and the longer side is horizontal.
+    Rotate the image according to its EXIF Orientation tag.
     """
-    width, height = img.size
+    try:
+        exif = image._getexif()
+        if not exif:
+            return image
+        for tag, value in exif.items():
+            if ExifTags.TAGS.get(tag) == "Orientation":
+                orientation = value
+                break
+        else:
+            return image
 
-    # If the short side is currently horizontal, rotate
-    if width < height:
-        # Already portrait, do nothing
-        return img
-    else:
-        # Rotate 90° clockwise to put the short side down
-        return img.rotate(90, expand=True)
+        if orientation == 1:
+            return image
+        elif orientation == 2:
+            return image.transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            return image.rotate(180, expand=True)
+        elif orientation == 4:
+            return image.transpose(Image.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            return image.transpose(Image.FLIP_LEFT_RIGHT).rotate(90, expand=True)
+        elif orientation == 6:
+            return image.rotate(270, expand=True)
+        elif orientation == 7:
+            return image.transpose(Image.FLIP_LEFT_RIGHT).rotate(270, expand=True)
+        elif orientation == 8:
+            return image.rotate(90, expand=True)
+        else:
+            return image
+    except Exception as e:
+        logger.warning(f"Failed to correct orientation: {e}")
+        return image
 
 
 def add_metadata_overlay(img: Image.Image, image_path: str) -> Image.Image:
