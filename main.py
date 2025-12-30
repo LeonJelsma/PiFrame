@@ -3,7 +3,7 @@ import time
 
 from const import IMAGES_DIR, IMAGE_DELAY_SECONDS
 from lib import epd13in3E
-from utils.image_utils import enhance_colors, resize_for_spectra6, image_generator, force_portrait
+from utils.image_utils import enhance_colors, resize_for_spectra6, image_generator, force_portrait, add_metadata_overlay
 
 screen = epd13in3E.EPD()
 
@@ -27,6 +27,7 @@ try:
         image = enhance_colors(image)
         image = resize_for_spectra6(image)
         image = force_portrait(image)
+        image = add_metadata_overlay(image)
 
         screen.display(screen.get_buffer(image))
 
