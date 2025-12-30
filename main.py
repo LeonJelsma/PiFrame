@@ -20,14 +20,14 @@ try:
     screen.Init()
     screen.Clear()
 
-    for image in image_generator(IMAGES_DIR):
+    for image, image_path in image_generator(IMAGES_DIR):
         logger.info("Drawing next image...")
 
         # Prepare image
         image = enhance_colors(image)
         image = resize_for_spectra6(image)
         image = force_portrait(image)
-        image = add_metadata_overlay(image)
+        image = add_metadata_overlay(image, image_path)
 
         screen.display(screen.get_buffer(image))
 

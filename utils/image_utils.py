@@ -131,7 +131,7 @@ def image_generator(path: str):
                 copy = image.copy()
                 image.close()
 
-                yield copy
+                yield copy, full_path
             except Exception as e:
                 print(f"⚠️ Skipping {file}: {e}")
 
@@ -152,7 +152,7 @@ def force_portrait(img: Image.Image) -> Image.Image:
         return img.rotate(90, expand=True)
 
 
-def add_metadata_overlay(img: Image.Image) -> Image.Image:
+def add_metadata_overlay(img: Image.Image, image_path: str) -> Image.Image:
     """
     Reads EXIF date and GPS location from a PIL image,
     and draws it in the bottom-right corner.
@@ -172,7 +172,8 @@ def add_metadata_overlay(img: Image.Image) -> Image.Image:
 
     # Extract EXIF
     try:
-        exif_dict = piexif.load(img.info.get("exif", b""))
+        exif_dict = piexif.load(image_path)
+
         # Date
         date_bytes = exif_dict["0th"].get(piexif.ImageIFD.DateTime)
         if date_bytes:
