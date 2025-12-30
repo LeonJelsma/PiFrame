@@ -16,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def enhance_colors(image, brightness=1.1, contrast=1.2, saturation=1.5):
+def enhance_colors(image, brightness=1.1, contrast=1.2, saturation=1.2):
     """
     Enhance an image for e-ink display to make colors pop.
 
