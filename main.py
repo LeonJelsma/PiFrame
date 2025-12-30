@@ -1,105 +1,32 @@
+import logging
 import os
 import time
 
-from PIL import Image, ImageEnhance
+from PIL import Image
 
 from const import IMAGES_DIR
 from lib import epd13in3E
+from utils.image_utils import enhance_colors, resize_for_spectra6, count_images, image_generator
 
 if not os.path.exists(IMAGES_DIR):
     os.makedirs(IMAGES_DIR)
 
-EPD_WIDTH = 1200
-EPD_HEIGHT = 1600
-
 screen = epd13in3E.EPD()
 
-
-def enhance_colors(image, brightness=1.1, contrast=1.2, saturation=1.5):
-    """
-    Enhance an image for e-ink display to make colors pop.
-
-    Args:
-        image (PIL.Image.Image): Input RGB image.
-        brightness (float): Brightness factor (>1 brighter, <1 darker)
-        contrast (float): Contrast factor (>1 stronger, <1 weaker)
-        saturation (float): Color saturation factor (>1 more saturated)
-
-    Returns:
-        PIL.Image.Image: Enhanced image
-    """
-    img = image.convert("RGB")
-
-    # Adjust brightness
-    enhancer = ImageEnhance.Brightness(img)
-    img = enhancer.enhance(brightness)
-
-    # Adjust contrast
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(contrast)
-
-    # Adjust saturation (color)
-    enhancer = ImageEnhance.Color(img)
-    img = enhancer.enhance(saturation)
-
-    return img
-
-
-def resize_for_spectra6(image):
-    """
-    Resize a PIL.Image to fit the Spectra 6 display (1200x1600) while keeping aspect ratio,
-    and pad with white if needed.
-
-    Args:
-        image (PIL.Image.Image): Input image.
-
-    Returns:
-        PIL.Image.Image: Resized and padded image.
-    """
-    img = image.convert("RGB")  # ensure RGB
-
-    # Calculate aspect ratios
-    img_ratio = img.width / img.height
-    target_ratio = EPD_WIDTH / EPD_HEIGHT
-
-    # Determine new size
-    if img_ratio > target_ratio:
-        # Image is wider than target → fit width
-        new_width = EPD_WIDTH
-        new_height = round(EPD_WIDTH / img_ratio)
-    else:
-        # Image is taller than target → fit height
-        new_height = EPD_HEIGHT
-        new_width = round(EPD_HEIGHT * img_ratio)
-
-    # Resize with high-quality resampling
-    img_resized = img.resize((new_width, new_height), Image.LANCZOS)
-
-    # Create white background
-    background = Image.new("RGB", (EPD_WIDTH, EPD_HEIGHT), (255, 255, 255))
-
-    # Paste resized image centered
-    x_offset = (EPD_WIDTH - new_width) // 2
-    y_offset = (EPD_HEIGHT - new_height) // 2
-    background.paste(img_resized, (x_offset, y_offset))
-
-    return background
-
+logger = logging.getLogger(__name__)
 
 try:
     screen.Init()
-    print("clearing...")
+    logger.info("PiFrame started!")
     screen.Clear()
 
-    # Reading Image
-    print("Drawing test.JPEG")
-    image = Image.open(os.path.join(IMAGES_DIR, 'test.JPEG'))
-    image = enhance_colors(image)
-    image = resize_for_spectra6(image)
-    screen.display(screen.getbuffer(image))
-
-    print("Waiting 30 seconds before clearing")
-    time.sleep(30)
+    for image_path in image_generator(IMAGES_DIR):
+        print("Drawing test.JPEG")
+        image = Image.open(os.path.join(image_path))
+        image = enhance_colors(image)
+        image = resize_for_spectra6(image)
+        screen.display(screen.getbuffer(image))
+        time.sleep(30)
 
     print("clearing...")
     screen.Clear()
