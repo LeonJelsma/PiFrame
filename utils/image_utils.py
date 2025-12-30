@@ -125,9 +125,18 @@ def image_generator(path: str):
             except Exception as e:
                 print(f"⚠️ Skipping {file}: {e}")
 
-def apply_exif_orientation(img: Image.Image) -> Image.Image:
+
+def force_portrait(img: Image.Image) -> Image.Image:
     """
-    Apply orientation from EXIF metadata to the pixel data,
-    then strip the original tag to avoid double-rotation.
+    Rotate image so that the *shorter side* is vertical (portrait)
+    and the longer side is horizontal.
     """
-    return ImageOps.exif_transpose(img)
+    width, height = img.size
+
+    # If the short side is currently horizontal, rotate
+    if width < height:
+        # Already portrait, do nothing
+        return img
+    else:
+        # Rotate 90° clockwise to put the short side down
+        return img.rotate(90, expand=True)

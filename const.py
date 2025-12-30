@@ -5,3 +5,5 @@ IMAGES_DIR = os.path.abspath('/mnt/frame-images')
 
 DISPLAY_WIDTH = 1200
 DISPLAY_HEIGHT = 1600
+
+IMAGE_DELAY_SECONDS = 180
