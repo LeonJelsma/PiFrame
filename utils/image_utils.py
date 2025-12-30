@@ -207,7 +207,10 @@ def add_metadata_overlay(img: Image.Image, image_path: str) -> Image.Image:
     text = f"{date_str} {gps_str}".strip()
     if text:
         # Draw semi-transparent rectangle for readability
-        text_width, text_height = draw.textsize(text, font=font)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
         padding = 4
         x = img.width - text_width - padding
         y = img.height - text_height - padding
