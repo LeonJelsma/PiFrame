@@ -1,6 +1,6 @@
 import os
 
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH
 
@@ -124,3 +124,10 @@ def image_generator(path: str):
                 yield copy
             except Exception as e:
                 print(f"⚠️ Skipping {file}: {e}")
+
+def apply_exif_orientation(img: Image.Image) -> Image.Image:
+    """
+    Apply orientation from EXIF metadata to the pixel data,
+    then strip the original tag to avoid double-rotation.
+    """
+    return ImageOps.exif_transpose(img)

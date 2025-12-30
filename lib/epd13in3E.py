@@ -26,20 +26,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import logging
 import time
 
 from PIL import Image
 
+from const import DISPLAY_WIDTH, DISPLAY_HEIGHT
 from lib import epdconfig
 
-EPD_WIDTH = 1200
-EPD_HEIGHT = 1600
+logger = logging.getLogger(__name__)
 
 
 class EPD():
     def __init__(self):
-        self.width = EPD_WIDTH
-        self.height = EPD_HEIGHT
+        self.width = DISPLAY_WIDTH
+        self.height = DISPLAY_HEIGHT
 
         self.BLACK = 0x000000  # 0000  BGR
         self.WHITE = 0xffffff  # 0001
@@ -82,13 +83,13 @@ class EPD():
         epdconfig.spi_writebyte2(buf, Len)
 
     def ReadBusyH(self):
-        print("e-Paper busy H")
+        logger.debug("e-Paper busy, waiting...")
         while (epdconfig.digital_read(self.EPD_BUSY_PIN) == 0):  # 0: busy, 1: idle
             epdconfig.delay_ms(5)
-        print("e-Paper busy H release")
+        logger.debug("e-Paper ready")
 
     def TurnOnDisplay(self):
-        print("Write PON")
+        logger.debug("Powering display on (PON)")
         self.CS_ALL(0)
         self.SendCommand(0x04)
         self.CS_ALL(1)
@@ -96,22 +97,22 @@ class EPD():
 
         epdconfig.delay_ms(50)
 
-        print("Write DRF")
+        logger.debug("Writing to display (DRF)")
         self.CS_ALL(0)
         self.SendCommand(0x12)
         self.SendData(0x00)
         self.CS_ALL(1)
         self.ReadBusyH()
 
-        print("Write POF")
+        logger.debug("Turning display off (POF)")
         self.CS_ALL(0)
         self.SendCommand(0x02)
         self.SendData(0x00)
         self.CS_ALL(1)
-        print("Display Done!!")
+        logger.debug("Finished drawing")
 
     def Init(self):
-        print("EPD init...")
+        logger.debug("Initializing display")
         epdconfig.module_init()
 
         self.Reset()
@@ -236,7 +237,8 @@ class EPD():
         elif (imwidth == self.height and imheight == self.width):
             image_temp = image.rotate(90, expand=True)
         else:
-            print("Invalid image dimensions: %d x %d, expected %d x %d" % (imwidth, imheight, self.width, self.height))
+            logger.error(
+                "Invalid image dimensions: %d x %d, expected %d x %d" % (imwidth, imheight, self.width, self.height))
 
         # Convert the soruce image to the 7 colors, dithering if needed
         image_7color = image_temp.convert("RGB").quantize(palette=pal_image)

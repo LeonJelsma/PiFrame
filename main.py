@@ -1,12 +1,9 @@
 import logging
-import os
 import time
-
-from PIL import Image
 
 from const import IMAGES_DIR
 from lib import epd13in3E
-from utils.image_utils import enhance_colors, resize_for_spectra6, count_images, image_generator
+from utils.image_utils import enhance_colors, resize_for_spectra6, image_generator, apply_exif_orientation
 
 screen = epd13in3E.EPD()
 
@@ -19,17 +16,21 @@ try:
     screen.Clear()
 
     for image in image_generator(IMAGES_DIR):
-        print("Drawing test.JPEG")
+        logger.info("Drawing next image...")
+        
+        # Prepare image
         image = enhance_colors(image)
         image = resize_for_spectra6(image)
+        image = apply_exif_orientation(image)
+
         screen.display(screen.getbuffer(image))
         time.sleep(30)
 
-    print("clearing...")
+    logger.info("Out of images, clearing screen...")
     screen.Clear()
 
-    print("Going to sleep...")
+    logger.info("Going to sleep...")
     screen.sleep()
 except Exception as e:
-    print(f"Encountered error, going to sleep: {e}")
+    logger.error(f"Encountered error, going to sleep: {e}")
     screen.sleep()
