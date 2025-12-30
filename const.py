@@ -1,6 +1,8 @@
 import os
 
-ROOT_DIR = os.path.abspath(os.path.join(os.getcwd(), '..'))
+ROOT_DIR = os.getcwd()
+ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
+FONTS_DIR = os.path.join(ASSETS_DIR, "fonts")
 IMAGES_DIR = os.path.abspath('/mnt/frame-images')
 
 DISPLAY_WIDTH = 1200

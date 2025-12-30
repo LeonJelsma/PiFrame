@@ -1,8 +1,18 @@
+import logging
 import os
 
-from PIL import Image, ImageEnhance, ImageOps
+import piexif
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw
 
-from const import DISPLAY_HEIGHT, DISPLAY_WIDTH
+from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR
+from utils.open_street_map_utils import coords_to_address
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 
 
 def enhance_colors(image, brightness=1.1, contrast=1.2, saturation=1.5):
@@ -140,3 +150,71 @@ def force_portrait(img: Image.Image) -> Image.Image:
     else:
         # Rotate 90° clockwise to put the short side down
         return img.rotate(90, expand=True)
+
+
+def add_metadata_overlay(img: Image.Image) -> Image.Image:
+    """
+    Reads EXIF date and GPS location from a PIL image,
+    and draws it in the bottom-right corner.
+    """
+    img = img.copy()
+    draw = ImageDraw.Draw(img)
+
+    # Try to load a simple font
+    try:
+        font = ImageFont.truetype(os.path.join(FONTS_DIR, 'FunnelSans-VariableFont_wght.ttf'), 18)
+    except:
+        logger.error("Failed to load font, using system default")
+        font = ImageFont.load_default()
+
+    date_str = ""
+    gps_str = ""
+
+    # Extract EXIF
+    try:
+        exif_dict = piexif.load(img.info.get("exif", b""))
+        # Date
+        date_bytes = exif_dict["0th"].get(piexif.ImageIFD.DateTime)
+        if date_bytes:
+            date_str = date_bytes.decode("utf-8")
+
+        # GPS
+        gps_ifd = exif_dict.get("GPS", {})
+        if gps_ifd:
+            def dms_to_deg(dms, ref):
+                deg = dms[0][0] / dms[0][1]
+                min = dms[1][0] / dms[1][1]
+                sec = dms[2][0] / dms[2][1]
+                val = deg + min / 60 + sec / 3600
+                if ref in [b"S", b"W"]:
+                    val = -val
+                return val
+
+            lat = gps_ifd.get(piexif.GPSIFD.GPSLatitude)
+            lat_ref = gps_ifd.get(piexif.GPSIFD.GPSLatitudeRef)
+            lon = gps_ifd.get(piexif.GPSIFD.GPSLongitude)
+            lon_ref = gps_ifd.get(piexif.GPSIFD.GPSLongitudeRef)
+
+            if lat and lat_ref and lon and lon_ref:
+                lat_val = dms_to_deg(lat, lat_ref)
+                lon_val = dms_to_deg(lon, lon_ref)
+                gps_str = coords_to_address(lat_val, lon_val)
+
+    except Exception as e:
+        print(f"Failed to read EXIF metadata: {e}")
+
+    text = f"{date_str} {gps_str}".strip()
+    if text:
+        # Draw semi-transparent rectangle for readability
+        text_width, text_height = draw.textsize(text, font=font)
+        padding = 4
+        x = img.width - text_width - padding
+        y = img.height - text_height - padding
+
+        draw.rectangle(
+            [(x - padding, y - padding), (img.width, img.height)],
+            fill=(255, 255, 255, 128)  # white background
+        )
+        draw.text((x, y), text, fill=(0, 0, 0), font=font)
+
+    return img

@@ -30,8 +30,8 @@ try:
 
         screen.display(screen.get_buffer(image))
 
-        time.sleep(IMAGE_DELAY_SECONDS)
         logger.info(f"Done, waiting {IMAGE_DELAY_SECONDS} seconds")
+        time.sleep(IMAGE_DELAY_SECONDS)
 
     logger.info("Out of images, clearing screen...")
     screen.Clear()
