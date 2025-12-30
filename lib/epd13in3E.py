@@ -223,35 +223,36 @@ class EPD():
         self.SendData(0x02)
         self.CS_ALL(1)
 
-    def getbuffer(self, image):
-        # Create a pallette with the 7 colors supported by the panel
+    def get_buffer(self, image):
+        image = image.resize((self.width, self.height), Image.LANCZOS)
+
         pal_image = Image.new("P", (1, 1))
-        pal_image.putpalette(
-            (0, 0, 0, 255, 255, 255, 255, 255, 0, 255, 0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 0) + (0, 0, 0) * 249)
-        # pal_image.putpalette( (0,0,0,  255,255,255,  0,255,0,   0,0,255,  255,0,0,  255,255,0, 255,128,0) + (0,0,0)*249)
+        palette = (
+                      0, 0, 0,  # Black
+                      255, 255, 255,  # White
+                      255, 255, 0,  # Yellow
+                      255, 0, 0,  # Red
+                      0, 0, 0,  # Extra Black (ignored)
+                      0, 0, 255,  # Blue
+                      0, 255, 0  # Green
+                  ) + (0, 0, 0) * 249  # Fill remaining palette entries
+        pal_image.putpalette(palette)
 
-        # Check if we need to rotate the image
-        imwidth, imheight = image.size
-        if (imwidth == self.width and imheight == self.height):
-            image_temp = image
-        elif (imwidth == self.height and imheight == self.width):
-            image_temp = image.rotate(90, expand=True)
-        else:
-            logger.error(
-                "Invalid image dimensions: %d x %d, expected %d x %d" % (imwidth, imheight, self.width, self.height))
+        # Quantize image to 7 colors with dithering ---
+        image_7color = image.convert("RGB").quantize(
+            palette=pal_image,
+            dither=Image.FLOYDSTEINBERG
+        )
 
-        # Convert the soruce image to the 7 colors, dithering if needed
-        image_7color = image_temp.convert("RGB").quantize(palette=pal_image)
+        # Convert to 4-bit packed buffer
         buf_7color = bytearray(image_7color.tobytes('raw'))
-
-        # PIL does not support 4 bit color, so pack the 4 bits of color
-        # into a single byte to transfer to the panel
-        buf = [0x00] * int(self.width * self.height / 2)
+        buf = [0x00] * (self.width * self.height // 2)
         idx = 0
         for i in range(0, len(buf_7color), 2):
             buf[idx] = (buf_7color[i] << 4) + buf_7color[i + 1]
             idx += 1
 
+        logger.debug("Buffer generated for image (%dx%d)" % (self.width, self.height))
         return buf
 
     def Clear(self, color=0x11):

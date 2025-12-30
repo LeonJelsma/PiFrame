@@ -28,7 +28,7 @@ try:
         image = resize_for_spectra6(image)
         image = force_portrait(image)
 
-        screen.display(screen.getbuffer(image))
+        screen.display(screen.get_buffer(image))
 
         time.sleep(IMAGE_DELAY_SECONDS)
         logger.info(f"Done, waiting {IMAGE_DELAY_SECONDS} seconds")
