@@ -26,7 +26,7 @@ try:
         # Prepare image
         image = enhance_colors(image)
         image = resize_for_spectra6(image)
-        image = correct_image_orientation(image)
+        image = correct_image_orientation(image, image_path)
         image = add_metadata_overlay(image, image_path)
 
         screen.display(screen.get_buffer(image))

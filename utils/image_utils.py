@@ -143,20 +143,14 @@ def image_generator(path: str, shuffle=True):
             print(f"⚠️ Skipping {full_path}: {e}")
 
 
-def correct_image_orientation(image: Image.Image) -> Image.Image:
+def correct_image_orientation(image: Image.Image, image_path: str) -> Image.Image:
     """
-    Rotate the image according to its EXIF Orientation tag.
+    Rotate the image according to its EXIF Orientation tag (if available).
+    Uses piexif to support all EXIF-enabled images.
     """
     try:
-        exif = image._getexif()
-        if not exif:
-            return image
-        for tag, value in exif.items():
-            if ExifTags.TAGS.get(tag) == "Orientation":
-                orientation = value
-                break
-        else:
-            return image
+        exif_dict = piexif.load(image_path)
+        orientation = exif_dict.get("0th", {}).get(piexif.ImageIFD.Orientation, 1)
 
         if orientation == 1:
             return image
@@ -176,6 +170,7 @@ def correct_image_orientation(image: Image.Image) -> Image.Image:
             return image.rotate(90, expand=True)
         else:
             return image
+
     except Exception as e:
         logger.warning(f"Failed to correct orientation: {e}")
         return image
