@@ -88,4 +88,4 @@ def slideshow():
         screen.sleep()
 
 
-threading.Thread(target=slideshow(), daemon=True).start()
+threading.Thread(target=slideshow, daemon=True).start()
