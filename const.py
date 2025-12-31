@@ -15,6 +15,7 @@ IMAGE_DELAY_SECONDS = 1200
 class ImageCollection(Enum):
     DEFAULT: str = "default"
     RICO: str = "rico"
+    MENG: str = "meng"
 
     def path(self) -> str:
         if self is ImageCollection.DEFAULT:
