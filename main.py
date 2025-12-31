@@ -28,6 +28,8 @@ next_image_trigger = threading.Event()
 @app.post("/next")
 def next_image():
     next_image_trigger.set()
+
+    logger.info(f"Received manual trigger to display next image")
     return {"status": "ok"}
 
 
@@ -38,6 +40,7 @@ def set_collection(name: str):
     CURRENT_IMAGE_COLLECTION = ImageCollection(name)
     next_image_trigger.set()
 
+    logger.info(f"Switched image collection to {CURRENT_IMAGE_COLLECTION.name}")
     return {
         "status": "ok",
     }
