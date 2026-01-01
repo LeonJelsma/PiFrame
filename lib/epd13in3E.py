@@ -229,7 +229,7 @@ class EPD():
         pal_image = Image.new("P", (1, 1))
         palette = (
                       0, 0, 0,  # Black
-                      255, 255, 255,  # White
+                      250, 250, 250,  # Off-White (instead of 255)
                       255, 255, 0,  # Yellow
                       255, 0, 0,  # Red
                       0, 0, 0,  # Extra Black (ignored)
