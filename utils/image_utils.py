@@ -3,7 +3,7 @@ import os
 import random
 
 import piexif
-from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ExifTags
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ExifTags, ImageFilter
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR
 from utils.open_street_map_utils import coords_to_address
@@ -15,6 +15,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+def sharpen(image, amount=1.2, radius=1.0):
+    return image.filter(ImageFilter.UnsharpMask(radius=radius, percent=int(amount*100), threshold=3))
 
 def enhance_colors(image, brightness=1.5, contrast=1.2, saturation=1.5):
     """

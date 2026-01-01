@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from const import IMAGE_DELAY_SECONDS, ImageCollection
 from lib import epd13in3E
 from utils.image_utils import enhance_colors, resize_for_spectra6, correct_image_orientation, \
-    get_random_image
+    get_random_image, sharpen
 
 screen = epd13in3E.EPD()
 
@@ -67,6 +67,7 @@ def slideshow():
             image = correct_image_orientation(image, image_path)
             image = enhance_colors(image)
             image = resize_for_spectra6(image)
+            image = sharpen(image)
 
             # image = add_metadata_overlay(image, image_path)
 
