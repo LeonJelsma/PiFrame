@@ -228,20 +228,12 @@ class EPD():
         # Convert to 4-bit packed buffer
         buf_7color = bytearray(image.tobytes())
 
-        logger.info(
-            "buf_7color=%d expected=%d",
-            len(buf_7color),
-            self.width * self.height
-        )
-        logger.info("image.mode = %s", image.mode)
-
         buf = [0x00] * (self.width * self.height // 2)
         idx = 0
         for i in range(0, len(buf_7color), 2):
             buf[idx] = (buf_7color[i] << 4) + buf_7color[i + 1]
             idx += 1
 
-        logger.debug("Buffer generated for image (%dx%d)" % (self.width, self.height))
         return buf
 
     def Clear(self, color=0x11):

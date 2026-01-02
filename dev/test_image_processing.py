@@ -28,7 +28,7 @@ disk_image.close()
 # Process image to buffer
 screen = epd13in3E.EPD()
 image = pre_process_image(image, "./test.jpeg")
-spectra_image = convert_to_spectra_palette(image)
 
-spectra_image.show()
+screen.get_buffer(image)
+image.show()
 print('')
