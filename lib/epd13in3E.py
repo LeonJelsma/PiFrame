@@ -233,6 +233,7 @@ class EPD():
             len(buf_7color),
             self.width * self.height
         )
+        logger.info("image.mode = %s", image.mode)
 
         buf = [0x00] * (self.width * self.height // 2)
         idx = 0
