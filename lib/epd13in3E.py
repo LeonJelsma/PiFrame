@@ -226,7 +226,7 @@ class EPD():
 
     def get_buffer(self, image):
         # Convert to 4-bit packed buffer
-        buf_7color = bytearray(image.tobytes('raw'))
+        buf_7color = bytearray(image.tobytes())
 
         logger.info(
             "buf_7color=%d expected=%d",
