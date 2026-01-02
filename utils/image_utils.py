@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def pre_process_image(image: Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
-    image = sharpen(image)
     image = enhance_colors(image)
     image = convert_to_spectra_palette(image)
     image = replace_colors(image, SPECTRA6_COLORS, SPECTRA6_PALETTE)
@@ -28,13 +27,8 @@ def pre_process_image(image: Image, image_path: str):
 
 
 def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat) -> Image.Image:
-
-
-    if image.mode != "P":
-        raise ValueError("Image must be mode 'P'")
-
     def flat_to_rgb_list(flat):
-        return [tuple(flat[i:i+3]) for i in range(0, len(flat), 3)]
+        return [tuple(flat[i:i + 3]) for i in range(0, len(flat), 3)]
 
     source_palette = flat_to_rgb_list(source_palette_flat)
     target_palette = flat_to_rgb_list(target_palette_flat)
@@ -43,7 +37,7 @@ def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat)
         raise ValueError("Source and target palettes must have the same number of colors")
 
     palette_data = image.getpalette()
-    palette_colors = [tuple(palette_data[i:i+3]) for i in range(0, len(palette_data), 3)]
+    palette_colors = [tuple(palette_data[i:i + 3]) for i in range(0, len(palette_data), 3)]
 
     color_map = dict(zip(source_palette, target_palette))
 
@@ -53,6 +47,7 @@ def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat)
 
     image.putpalette(new_palette)
     return image
+
 
 def convert_to_spectra_palette(image: Image):
     pal_image = Image.new("P", (1, 1))
@@ -68,11 +63,7 @@ def convert_to_spectra_palette(image: Image):
     return image
 
 
-def sharpen(image, amount=1.2, radius=1.0):
-    return image.filter(ImageFilter.UnsharpMask(radius=radius, percent=int(amount * 100), threshold=3))
-
-
-def enhance_colors(image, brightness=1.2, contrast=1.0, saturation=1.1):
+def enhance_colors(image):
     """
     Enhance an image for e-ink display to make colors pop.
 
@@ -87,17 +78,13 @@ def enhance_colors(image, brightness=1.2, contrast=1.0, saturation=1.1):
     """
     img = image.convert("RGB")
 
-    # Adjust brightness
-    enhancer = ImageEnhance.Brightness(img)
-    img = enhancer.enhance(brightness)
+    img = ImageEnhance.Brightness(img).enhance(1.15)
 
-    # Adjust contrast
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(contrast)
+    img = ImageEnhance.Contrast(img).enhance(1.15)
 
-    # Adjust saturation (color)
-    enhancer = ImageEnhance.Color(img)
-    img = enhancer.enhance(saturation)
+    img = ImageEnhance.Color(img).enhance(1.1)
+
+    img = img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=130, threshold=2))
 
     return img
 
