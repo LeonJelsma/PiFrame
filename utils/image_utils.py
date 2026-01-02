@@ -21,7 +21,6 @@ def pre_process_image(image: Image, image_path: str):
     image = enhance_colors(image)
     image = sharpen(image)
     image = resize_for_spectra6(image)
-    image = convert_to_spectra_palette(image)
 
     return image
 
@@ -43,7 +42,7 @@ def sharpen(image, amount=1.2, radius=1.0):
     return image.filter(ImageFilter.UnsharpMask(radius=radius, percent=int(amount * 100), threshold=3))
 
 
-def enhance_colors(image, brightness=1.0, contrast=1.0, saturation=1.1):
+def enhance_colors(image, brightness=1.2, contrast=1.0, saturation=1.1):
     """
     Enhance an image for e-ink display to make colors pop.
 

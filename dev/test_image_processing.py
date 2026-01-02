@@ -18,9 +18,7 @@ epdconfig.EPD_PWR_PIN = 18
 sys.modules["lib.epdconfig"] = epdconfig
 
 from lib import epd13in3E
-from utils.image_utils import pre_process_image
-
-
+from utils.image_utils import pre_process_image, convert_to_spectra_palette
 
 # Open image
 disk_image = Image.open("./test.jpeg")
@@ -30,6 +28,7 @@ disk_image.close()
 # Process image to buffer
 screen = epd13in3E.EPD()
 image = pre_process_image(image, "./test.jpeg")
+spectra_image = convert_to_spectra_palette(image)
 
-image.show()
+spectra_image.show()
 print('')
