@@ -229,6 +229,13 @@ class EPD():
 
         # Convert to 4-bit packed buffer
         buf_7color = bytearray(image.tobytes('raw'))
+
+        logger.info(
+            "buf_7color=%d expected=%d",
+            len(buf_7color),
+            self.width * self.height
+        )
+
         buf = [0x00] * (self.width * self.height // 2)
         idx = 0
         for i in range(0, len(buf_7color), 2):
