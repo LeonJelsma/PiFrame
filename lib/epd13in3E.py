@@ -31,7 +31,7 @@ import time
 
 from PIL import Image
 
-from const import DISPLAY_WIDTH, DISPLAY_HEIGHT, SPECTRA6_PALETTE
+from const import DISPLAY_WIDTH, DISPLAY_HEIGHT, SPECTRA6_COLORS
 from lib import epdconfig
 from utils.image_utils import convert_to_spectra_palette
 
@@ -225,7 +225,6 @@ class EPD():
         self.CS_ALL(1)
 
     def get_buffer(self, image):
-        # Convert to 4-bit packed buffer
         buf_7color = bytearray(image.tobytes())
 
         buf = [0x00] * (self.width * self.height // 2)

@@ -3,7 +3,7 @@ from types import ModuleType
 
 from PIL import Image
 
-from const import SPECTRA6_PALETTE
+from const import SPECTRA6_COLORS
 
 # Create a dummy 'epdconfig' module
 epdconfig = ModuleType("epdconfig")

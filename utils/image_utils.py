@@ -3,9 +3,9 @@ import os
 import random
 
 import piexif
-from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ExifTags, ImageFilter
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 
-from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_PALETTE
+from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
 from utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
@@ -18,17 +18,45 @@ logger = logging.getLogger(__name__)
 
 def pre_process_image(image: Image, image_path: str):
     image = correct_image_orientation(image, image_path)
-    image = enhance_colors(image)
     image = resize_for_spectra6(image)
     image = sharpen(image)
+    image = enhance_colors(image)
     image = convert_to_spectra_palette(image)
+    image = replace_colors(image, SPECTRA6_COLORS, SPECTRA6_PALETTE)
 
     return image
 
 
+def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat) -> Image.Image:
+
+
+    if image.mode != "P":
+        raise ValueError("Image must be mode 'P'")
+
+    def flat_to_rgb_list(flat):
+        return [tuple(flat[i:i+3]) for i in range(0, len(flat), 3)]
+
+    source_palette = flat_to_rgb_list(source_palette_flat)
+    target_palette = flat_to_rgb_list(target_palette_flat)
+
+    if len(source_palette) != len(target_palette):
+        raise ValueError("Source and target palettes must have the same number of colors")
+
+    palette_data = image.getpalette()
+    palette_colors = [tuple(palette_data[i:i+3]) for i in range(0, len(palette_data), 3)]
+
+    color_map = dict(zip(source_palette, target_palette))
+
+    new_palette = []
+    for color in palette_colors:
+        new_palette.extend(color_map.get(color, color))
+
+    image.putpalette(new_palette)
+    return image
+
 def convert_to_spectra_palette(image: Image):
     pal_image = Image.new("P", (1, 1))
-    palette = SPECTRA6_PALETTE + (0, 0, 0) * 249  # Fill remaining palette entries
+    palette = SPECTRA6_COLORS + (0, 0, 0) * 249  # Fill remaining palette entries
     pal_image.putpalette(palette)
 
     # Quantize image to 7 colors with dithering

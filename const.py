@@ -11,7 +11,7 @@ DISPLAY_HEIGHT = 1600
 
 IMAGE_DELAY_SECONDS = 1200
 
-SPECTRA6_PALETTE = (
+SPECTRA6_COLORS = (
     0, 0, 0,  # Black
     250, 250, 250,  # Off-White (instead of 255)
     255, 255, 0,  # Yellow
@@ -19,6 +19,16 @@ SPECTRA6_PALETTE = (
     0, 0, 0,  # Extra Black (ignored)
     0, 0, 255,  # Blue
     0, 255, 0  # Green
+)
+
+SPECTRA6_PALETTE = (
+    25, 30, 33,  # Black
+    232, 232, 232,  # Off-White
+    239, 222, 68,  # Yellow
+    178, 19, 24,  # Red
+    0, 0, 0,  # Extra Black (ignored)
+    33, 87, 186,  # Blue
+    18, 95, 32  # Green
 )
 
 
