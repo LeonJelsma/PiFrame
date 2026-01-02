@@ -64,7 +64,7 @@ def slideshow():
             logger.info(f"Drawing next image: {image_path}")
 
             # Prepare image
-            pre_process_image(image, image_path)
+            image = pre_process_image(image, image_path)
 
             screen.display(screen.get_buffer(image))
 
