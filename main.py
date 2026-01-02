@@ -6,8 +6,7 @@ from fastapi import FastAPI
 
 from const import IMAGE_DELAY_SECONDS, ImageCollection
 from lib import epd13in3E
-from utils.image_utils import enhance_colors, resize_for_spectra6, correct_image_orientation, \
-    get_random_image, sharpen, pre_process_image
+from utils.image_utils import get_random_image, pre_process_image
 
 screen = epd13in3E.EPD()
 
