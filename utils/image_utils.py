@@ -28,14 +28,21 @@ def pre_process_image(image: Image, image_path: str):
 
 def convert_to_spectra_palette(image: Image):
     pal_image = Image.new("P", (1, 1))
-    palette = SPECTRA6_PALETTE + (0, 0, 0) * 249  # Fill remaining palette entries
-    pal_image.putpalette(palette)
 
-    # Quantize image to 7 colors with dithering ---
+    flat_palette = list(SPECTRA6_PALETTE)
+
+    flat_palette.extend([0] * (768 - len(flat_palette)))
+
+    pal_image.putpalette(flat_palette)
+
     image = image.convert("RGB").quantize(
         palette=pal_image,
         dither=Image.FLOYDSTEINBERG
     )
+
+    if image.mode != "P":
+        raise RuntimeError(f"Spectra quantize failed, got {image.mode}")
+
     return image
 
 
