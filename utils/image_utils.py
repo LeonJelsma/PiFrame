@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 def pre_process_image(image: Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = enhance_colors(image)
-    image = sharpen(image)
     image = resize_for_spectra6(image)
+    image = sharpen(image)
 
     return image
 
