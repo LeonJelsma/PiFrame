@@ -31,8 +31,9 @@ import time
 
 from PIL import Image
 
-from const import DISPLAY_WIDTH, DISPLAY_HEIGHT
+from const import DISPLAY_WIDTH, DISPLAY_HEIGHT, SPECTRA6_PALETTE
 from lib import epdconfig
+from utils.image_utils import convert_to_spectra_palette
 
 logger = logging.getLogger(__name__)
 
@@ -226,23 +227,7 @@ class EPD():
     def get_buffer(self, image):
         image = image.resize((self.width, self.height), Image.LANCZOS)
 
-        pal_image = Image.new("P", (1, 1))
-        palette = (
-                      0, 0, 0,  # Black
-                      250, 250, 250,  # Off-White (instead of 255)
-                      255, 255, 0,  # Yellow
-                      255, 0, 0,  # Red
-                      0, 0, 0,  # Extra Black (ignored)
-                      0, 0, 255,  # Blue
-                      0, 255, 0  # Green
-                  ) + (0, 0, 0) * 249  # Fill remaining palette entries
-        pal_image.putpalette(palette)
-
-        # Quantize image to 7 colors with dithering ---
-        image_7color = image.convert("RGB").quantize(
-            palette=pal_image,
-            dither=Image.FLOYDSTEINBERG
-        )
+        image_7color = convert_to_spectra_palette(image)
 
         # Convert to 4-bit packed buffer
         buf_7color = bytearray(image_7color.tobytes('raw'))

@@ -5,7 +5,7 @@ import random
 import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ExifTags, ImageFilter
 
-from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR
+from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_PALETTE
 from utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
@@ -15,10 +15,35 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def sharpen(image, amount=1.2, radius=1.0):
-    return image.filter(ImageFilter.UnsharpMask(radius=radius, percent=int(amount*100), threshold=3))
 
-def enhance_colors(image, brightness=1.5, contrast=1.2, saturation=1.5):
+def pre_process_image(image: Image, image_path: str):
+    image = correct_image_orientation(image, image_path)
+    image = enhance_colors(image)
+    image = sharpen(image)
+    image = resize_for_spectra6(image)
+    image = convert_to_spectra_palette(image)
+
+    return image
+
+
+def convert_to_spectra_palette(image: Image):
+    pal_image = Image.new("P", (1, 1))
+    palette = SPECTRA6_PALETTE + (0, 0, 0) * 249  # Fill remaining palette entries
+    pal_image.putpalette(palette)
+
+    # Quantize image to 7 colors with dithering ---
+    image = image.convert("RGB").quantize(
+        palette=pal_image,
+        dither=Image.FLOYDSTEINBERG
+    )
+    return image
+
+
+def sharpen(image, amount=1.2, radius=1.0):
+    return image.filter(ImageFilter.UnsharpMask(radius=radius, percent=int(amount * 100), threshold=3))
+
+
+def enhance_colors(image, brightness=1.0, contrast=1.0, saturation=1.1):
     """
     Enhance an image for e-ink display to make colors pop.
 
