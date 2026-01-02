@@ -21,6 +21,7 @@ def pre_process_image(image: Image, image_path: str):
     image = enhance_colors(image)
     image = resize_for_spectra6(image)
     image = sharpen(image)
+    image = convert_to_spectra_palette(image)
 
     return image
 

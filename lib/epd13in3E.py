@@ -225,12 +225,8 @@ class EPD():
         self.CS_ALL(1)
 
     def get_buffer(self, image):
-        image = image.resize((self.width, self.height), Image.LANCZOS)
-
-        image_7color = convert_to_spectra_palette(image)
-
         # Convert to 4-bit packed buffer
-        buf_7color = bytearray(image_7color.tobytes('raw'))
+        buf_7color = bytearray(image.tobytes('raw'))
         buf = [0x00] * (self.width * self.height // 2)
         idx = 0
         for i in range(0, len(buf_7color), 2):
