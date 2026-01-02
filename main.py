@@ -82,8 +82,8 @@ def slideshow():
 
         logger.info("Going to sleep...")
         screen.sleep()
-    except Exception as e:
-        logger.error(f"Encountered error, going to sleep: {e}")
+    except Exception:
+        logger.exception("Encountered error, going to sleep")
         screen.sleep()
 
 
