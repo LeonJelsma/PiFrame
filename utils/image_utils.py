@@ -7,6 +7,8 @@ import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
+from utils.akinson_dithering import atkinson_dither_lab
+from utils.color_mapping_utils import quantize_lab_nearest
 from utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
@@ -21,9 +23,18 @@ def pre_process_image(image: Image.Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
     image = enhance_colors(image)
-    image = convert_to_spectra_palette(image)
-    image = replace_colors(image, SPECTRA6_COLORS, SPECTRA6_PALETTE)
 
+    # ONE quantize/dither step:
+    image = atkinson_dither_lab(
+        image,
+        SPECTRA6_COLORS,
+        neutral_chroma=10.0,
+        white_L=92.0,
+        black_L=18.0
+    )
+
+    # optional (only if your hardware palette differs from your processing palette)
+    #image = replace_colors(image, SPECTRA6_COLORS, SPECTRA6_PALETTE)
     return image
 
 
@@ -93,7 +104,7 @@ def convert_to_spectra_palette(image: Image.Image):
     # Quantize image to 7 colors with dithering
     image = image.convert("RGB").quantize(
         palette=pal_image,
-        dither=Image.FLOYDSTEINBERG
+        dither=Image.NONE
     )
 
     return image
