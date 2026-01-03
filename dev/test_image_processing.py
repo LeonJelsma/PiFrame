@@ -21,13 +21,13 @@ from lib import epd13in3E
 from utils.image_utils import pre_process_image, convert_to_spectra_palette
 
 # Open image
-disk_image = Image.open("./test_1.JPEG")
+disk_image = Image.open("./test_2.JPEG")
 image = disk_image.copy()
 disk_image.close()
 
 # Process image to buffer
 screen = epd13in3E.EPD()
-image = pre_process_image(image, "./test_1.JPEG")
+image = pre_process_image(image, "./test_2.JPEG")
 
 screen.get_buffer(image)
 image.show()

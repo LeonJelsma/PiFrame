@@ -78,7 +78,7 @@ def apply_vibrance(
     return img
 
 
-def apply_gamma(img: Image.Image, gamma=1.12) -> Image.Image:
+def apply_gamma(img: Image.Image, gamma) -> Image.Image:
     # gamma < 1 brightens midtones, >1 darkens midtones
     inv = 1.0 / gamma
     table = [int(((i / 255.0) ** inv) * 255) for i in range(256)]
@@ -101,14 +101,14 @@ def convert_to_spectra_palette(image: Image.Image):
 
 def enhance_colors(image: Image.Image) -> Image.Image:
     img = image.convert("RGB")
-    img = ImageOps.autocontrast(img, cutoff=1)
+    img = ImageOps.autocontrast(img, cutoff=2)
     img = ImageEnhance.Brightness(img).enhance(1.05)
-    img = ImageEnhance.Contrast(img).enhance(1.28)
+    img = ImageEnhance.Contrast(img).enhance(1.10)
 
     img = apply_vibrance(img)
     img = ImageEnhance.Color(img).enhance(1.15)  # was 1.45
 
-    img = apply_gamma(img, gamma=1.12)
+    img = apply_gamma(img, gamma=1.25)
     img = img.filter(ImageFilter.UnsharpMask(radius=1.3, percent=160, threshold=4))
 
     return img
