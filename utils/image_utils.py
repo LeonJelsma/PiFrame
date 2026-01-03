@@ -1,9 +1,10 @@
+import colorsys
 import logging
 import os
 import random
 
 import piexif
-from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
 from utils.open_street_map_utils import coords_to_address
@@ -16,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def pre_process_image(image: Image, image_path: str):
+def pre_process_image(image: Image.Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
     image = enhance_colors(image)
@@ -49,7 +50,42 @@ def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat)
     return image
 
 
-def convert_to_spectra_palette(image: Image):
+def apply_vibrance(
+        img: Image.Image,
+        amount: float = 0.35,
+        protect_l: float = 0.88,  # protect highlights (0..1). try 0.85–0.92
+        protect_s: float = 0.12  # protect neutrals (0..1). try 0.08–0.18
+) -> Image.Image:
+    img = img.convert("RGB")
+    px = img.load()
+    w, h = img.size
+
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            rf, gf, bf = r / 255.0, g / 255.0, b / 255.0
+
+            h_, l_, s_ = colorsys.rgb_to_hls(rf, gf, bf)
+
+            if l_ >= protect_l or s_ <= protect_s:
+                continue
+
+            s2 = s_ + (1.0 - s_) * amount
+
+            r2, g2, b2 = colorsys.hls_to_rgb(h_, l_, s2)
+            px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255))
+
+    return img
+
+
+def apply_gamma(img: Image.Image, gamma=1.12) -> Image.Image:
+    # gamma < 1 brightens midtones, >1 darkens midtones
+    inv = 1.0 / gamma
+    table = [int(((i / 255.0) ** inv) * 255) for i in range(256)]
+    return img.point(table * 3)
+
+
+def convert_to_spectra_palette(image: Image.Image):
     pal_image = Image.new("P", (1, 1))
     palette = SPECTRA6_COLORS + (0, 0, 0) * 249  # Fill remaining palette entries
     pal_image.putpalette(palette)
@@ -63,28 +99,17 @@ def convert_to_spectra_palette(image: Image):
     return image
 
 
-def enhance_colors(image):
-    """
-    Enhance an image for e-ink display to make colors pop.
-
-    Args:
-        image (PIL.Image.Image): Input RGB image.
-        brightness (float): Brightness factor (>1 brighter, <1 darker)
-        contrast (float): Contrast factor (>1 stronger, <1 weaker)
-        saturation (float): Color saturation factor (>1 more saturated)
-
-    Returns:
-        PIL.Image.Image: Enhanced image
-    """
+def enhance_colors(image: Image.Image) -> Image.Image:
     img = image.convert("RGB")
+    img = ImageOps.autocontrast(img, cutoff=1)
+    img = ImageEnhance.Brightness(img).enhance(1.05)
+    img = ImageEnhance.Contrast(img).enhance(1.28)
 
-    img = ImageEnhance.Brightness(img).enhance(1.15)
+    img = apply_vibrance(img)
+    img = ImageEnhance.Color(img).enhance(1.15)  # was 1.45
 
-    img = ImageEnhance.Contrast(img).enhance(1.15)
-
-    img = ImageEnhance.Color(img).enhance(1.1)
-
-    img = img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=130, threshold=2))
+    img = apply_gamma(img, gamma=1.12)
+    img = img.filter(ImageFilter.UnsharpMask(radius=1.3, percent=160, threshold=4))
 
     return img
 
