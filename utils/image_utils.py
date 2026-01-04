@@ -7,8 +7,7 @@ import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
-from utils.akinson_dithering import atkinson_dither_lab
-from utils.color_mapping_utils import quantize_lab_nearest
+from utils.akinson_dithering import atkinson_dither_lut, build_lut_5bit
 from utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
@@ -18,24 +17,46 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+LUT5, PAL_RGB = build_lut_5bit(SPECTRA6_PALETTE)
+
+# Indices after removing duplicates should be:
+# 0 black, 1 off-white, 2 yellow, 3 red, 4 blue, 5 green
+BLACK_IDX = 0
+WHITE_IDX = 1
+
 
 def pre_process_image(image: Image.Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
-    image = enhance_colors(image)
+    # image = enhance_colors(image)
 
-    # ONE quantize/dither step:
-    image = atkinson_dither_lab(
+    # palette = unique_palette_flat(
+    #     SPECTRA6_PALETTE)
+
+    image = atkinson_dither_lut(
         image,
-        SPECTRA6_COLORS,
-        neutral_chroma=10.0,
-        white_L=92.0,
-        black_L=18.0
+        SPECTRA6_PALETTE,
+        LUT5,
+        PAL_RGB,
+        neutral_thresh=10,
+        white_min=245,
+        black_max=5,
+        white_idx=WHITE_IDX,
+        black_idx=BLACK_IDX,
+        serpentine=True,
     )
+    # image = convert_to_spectra_palette(image)
 
-    # optional (only if your hardware palette differs from your processing palette)
-    #image = replace_colors(image, SPECTRA6_COLORS, SPECTRA6_PALETTE)
     return image
+
+
+def unique_palette_flat(palette_flat: tuple) -> tuple:
+    colors = [tuple(palette_flat[i:i + 3]) for i in range(0, len(palette_flat), 3)]
+    uniq = []
+    for c in colors:
+        if c not in uniq:
+            uniq.append(c)
+    return tuple(v for rgb in uniq for v in rgb)
 
 
 def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat) -> Image.Image:
@@ -98,13 +119,13 @@ def apply_gamma(img: Image.Image, gamma) -> Image.Image:
 
 def convert_to_spectra_palette(image: Image.Image):
     pal_image = Image.new("P", (1, 1))
-    palette = SPECTRA6_COLORS + (0, 0, 0) * 249  # Fill remaining palette entries
+    palette = SPECTRA6_PALETTE + (0, 0, 0) * 249  # Fill remaining palette entries
     pal_image.putpalette(palette)
 
     # Quantize image to 7 colors with dithering
     image = image.convert("RGB").quantize(
         palette=pal_image,
-        dither=Image.NONE
+        dither=Image.FLOYDSTEINBERG
     )
 
     return image
