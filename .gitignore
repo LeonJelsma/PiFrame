@@ -2,3 +2,5 @@
 .idea/
 
 *.pyc
+
+piframe.egg-info/
