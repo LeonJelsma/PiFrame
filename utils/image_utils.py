@@ -2,12 +2,11 @@ import colorsys
 import logging
 import os
 import random
-
 import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
 from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
-from utils.akinson_dithering import atkinson_dither_lut, build_lut_5bit
+from utils.akinson_dithering import atkinson_dither
 from utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
@@ -16,8 +15,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-LUT5, PAL_RGB = build_lut_5bit(SPECTRA6_COLORS)
 
 # Indices after removing duplicates should be:
 # 0 black, 1 off-white, 2 yellow, 3 red, 4 blue, 5 green
@@ -33,18 +30,7 @@ def pre_process_image(image: Image.Image, image_path: str):
     # palette = unique_palette_flat(
     #     SPECTRA6_PALETTE)
 
-    image = atkinson_dither_lut(
-        image,
-        SPECTRA6_COLORS,
-        LUT5,
-        PAL_RGB,
-        neutral_thresh=10,
-        white_min=245,
-        black_max=5,
-        white_idx=WHITE_IDX,
-        black_idx=BLACK_IDX,
-        serpentine=True,
-    )
+    image = atkinson_dither(image, SPECTRA6_PALETTE)
     # image = convert_to_spectra_palette(image)
 
     return image
@@ -84,9 +70,10 @@ def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat)
 
 def apply_vibrance(
         img: Image.Image,
-        amount: float = 0.35,
-        protect_l: float = 0.88,  # protect highlights (0..1). try 0.85–0.92
-        protect_s: float = 0.12  # protect neutrals (0..1). try 0.08–0.18
+        *,
+        amount: float = 0.25,
+        max_s: float = 0.65,
+        highlight_protect: float = 0.20,
 ) -> Image.Image:
     img = img.convert("RGB")
     px = img.load()
@@ -96,16 +83,14 @@ def apply_vibrance(
         for x in range(w):
             r, g, b = px[x, y]
             rf, gf, bf = r / 255.0, g / 255.0, b / 255.0
-
             h_, l_, s_ = colorsys.rgb_to_hls(rf, gf, bf)
 
-            if l_ >= protect_l or s_ <= protect_s:
-                continue
-
-            s2 = s_ + (1.0 - s_) * amount
-
-            r2, g2, b2 = colorsys.hls_to_rgb(h_, l_, s2)
-            px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255))
+            if s_ < max_s:
+                boost = (1.0 - s_) * amount
+                boost *= (1.0 - highlight_protect * l_)
+                s2 = min(1.0, s_ + boost)
+                r2, g2, b2 = colorsys.hls_to_rgb(h_, l_, s2)
+                px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255))
 
     return img
 
@@ -125,7 +110,7 @@ def convert_to_spectra_palette(image: Image.Image):
     # Quantize image to 7 colors with dithering
     image = image.convert("RGB").quantize(
         palette=pal_image,
-        dither=Image.FLOYDSTEINBERG
+        dither=Image.NONE
     )
 
     return image
@@ -133,15 +118,16 @@ def convert_to_spectra_palette(image: Image.Image):
 
 def enhance_colors(image: Image.Image) -> Image.Image:
     img = image.convert("RGB")
-    img = ImageOps.autocontrast(img, cutoff=2)
-    img = ImageEnhance.Brightness(img).enhance(1.05)
-    img = ImageEnhance.Contrast(img).enhance(1.10)
 
-    img = apply_vibrance(img)
-    img = ImageEnhance.Color(img).enhance(1.15)  # was 1.45
+    img = ImageOps.autocontrast(img, cutoff=1)
+    img = ImageEnhance.Contrast(img).enhance(1.08)
+    img = ImageEnhance.Brightness(img).enhance(1.04)
 
-    img = apply_gamma(img, gamma=1.25)
-    img = img.filter(ImageFilter.UnsharpMask(radius=1.3, percent=160, threshold=4))
+    img = apply_vibrance(img, amount=0.25)
+
+    img = apply_gamma(img, gamma=1.03)
+
+    img = img.filter(ImageFilter.UnsharpMask(radius=1.1, percent=140, threshold=6))
 
     return img
 
