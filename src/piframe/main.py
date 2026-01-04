@@ -65,7 +65,22 @@ def slideshow():
             # Prepare image
             image = pre_process_image(image, image_path)
 
-            screen.display(screen.get_buffer(image))
+            from PIL import Image
+            import numpy as np
+
+            def make_index_stripes(w=1200, h=1600):
+                idx = np.zeros((h, w), dtype=np.uint8)
+                stripe_w = w // 7
+                for i in range(7):
+                    idx[:, i * stripe_w:(i + 1) * stripe_w] = i
+                return Image.fromarray(idx, mode="P")
+
+            img = make_index_stripes()
+            # IMPORTANT: palette doesn't matter for the panel, only for preview
+            # (attach anything you like so PC preview isn't grayscale)
+            img.putpalette([0, 0, 0] * 256)
+
+            screen.display(screen.get_buffer(img))
 
             # Free up memory
             del image
