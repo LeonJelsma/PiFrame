@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def pre_process_image(image: Image.Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
-    # image = enhance_colors(image)
+    image = enhance_colors(image)
 
     image = atkinson_dither(image, SPECTRA6_DITHER_PALETTE)
     image = remap_to_driver(image)
@@ -79,15 +79,15 @@ def apply_gamma(img: Image.Image, gamma) -> Image.Image:
 def enhance_colors(image: Image.Image) -> Image.Image:
     img = image.convert("RGB")
 
-    img = ImageOps.autocontrast(img, cutoff=1)
-    img = ImageEnhance.Contrast(img).enhance(1.08)
-    img = ImageEnhance.Brightness(img).enhance(1.04)
+    # img = ImageOps.autocontrast(img, cutoff=1)
+    img = ImageEnhance.Contrast(img).enhance(1.05)
+    # img = ImageEnhance.Brightness(img).enhance(1.04)
 
-    img = apply_vibrance(img, amount=0.25)
+    img = apply_vibrance(img, amount=0.05)
 
-    img = apply_gamma(img, gamma=1.03)
+    img = apply_gamma(img, gamma=1.13)
 
-    img = img.filter(ImageFilter.UnsharpMask(radius=1.1, percent=140, threshold=6))
+    # img = img.filter(ImageFilter.UnsharpMask(radius=1.1, percent=140, threshold=6))
 
     return img
 
