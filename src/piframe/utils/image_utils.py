@@ -25,22 +25,10 @@ def pre_process_image(image: Image.Image, image_path: str):
     image = resize_for_spectra6(image)
     # image = enhance_colors(image)
 
-    dither_palette = unique_palette_flat(
-        SPECTRA6_DITHER_PALETTE)
-
-    image = atkinson_dither(image, dither_palette)
+    image = atkinson_dither(image, SPECTRA6_DITHER_PALETTE)
     image = remap_to_driver(image)
 
     return image
-
-
-def unique_palette_flat(palette_flat: tuple) -> tuple:
-    colors = [tuple(palette_flat[i:i + 3]) for i in range(0, len(palette_flat), 3)]
-    uniq = []
-    for c in colors:
-        if c not in uniq:
-            uniq.append(c)
-    return tuple(v for rgb in uniq for v in rgb)
 
 
 def remap_to_driver(img_p: Image.Image) -> Image.Image:

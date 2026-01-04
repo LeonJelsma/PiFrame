@@ -18,14 +18,16 @@ sys.modules["piframe.lib.epdconfig"] = epdconfig
 from piframe.lib import epd13in3E
 from piframe.utils.image_utils import pre_process_image
 
+test_image_name = "test_2.JPEG"
+
 # Open image
-disk_image = Image.open("test_2.JPEG")
+disk_image = Image.open(test_image_name)
 image = disk_image.copy()
 disk_image.close()
 
 # Process image to buffer
 screen = epd13in3E.EPD()
-image = pre_process_image(image, "./test_2.JPEG")
+image = pre_process_image(image, "./" + test_image_name)
 print(image.mode, min(image.getdata()), max(image.getdata()))
 screen.get_buffer(image)
 image.show()
