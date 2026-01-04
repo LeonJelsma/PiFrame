@@ -29,8 +29,8 @@
 import logging
 import time
 
-from const import DISPLAY_WIDTH, DISPLAY_HEIGHT
-from lib import epdconfig
+from piframe.const import DISPLAY_WIDTH, DISPLAY_HEIGHT
+from piframe.lib import epdconfig
 
 logger = logging.getLogger(__name__)
 

@@ -5,9 +5,9 @@ import random
 import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
-from const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_COLORS, SPECTRA6_PALETTE
-from utils.akinson_dithering import atkinson_dither
-from utils.open_street_map_utils import coords_to_address
+from piframe.const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_PALETTE
+from piframe.utils.akinson_dithering import atkinson_dither
+from piframe.utils.open_street_map_utils import coords_to_address
 
 logging.basicConfig(
     level=logging.INFO,

@@ -4,9 +4,9 @@ import time
 
 from fastapi import FastAPI
 
-from const import IMAGE_DELAY_SECONDS, ImageCollection
-from lib import epd13in3E
-from utils.image_utils import get_random_image, pre_process_image
+from piframe.const import IMAGE_DELAY_SECONDS, ImageCollection
+from piframe.lib import epd13in3E
+from piframe.utils.image_utils import get_random_image, pre_process_image
 
 screen = epd13in3E.EPD()
 
