@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/home/[user]/.local/bin/uv run /home/[user]/PiFrame/main.py
+ExecStart=/home/[user]/.local/bin/uv run uvicorn piframe.main:app \
+    --host 0.0.0.0 --port 8000
 WorkingDirectory=/home/[user]/PiFrame
 Restart=always
 User=pi

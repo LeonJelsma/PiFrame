@@ -1,6 +1,8 @@
 import os
 from enum import Enum
 
+import numpy as np
+
 ROOT_DIR = os.getcwd()
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 FONTS_DIR = os.path.join(ASSETS_DIR, "fonts")
@@ -11,25 +13,37 @@ DISPLAY_HEIGHT = 1600
 
 IMAGE_DELAY_SECONDS = 1200
 
-SPECTRA6_COLORS = (
-    0, 0, 0,  # Black
-    250, 250, 250,  # Off-White (instead of 255)
-    255, 255, 0,  # Yellow
-    255, 0, 0,  # Red
-    0, 0, 0,  # Extra Black (ignored)
-    0, 0, 255,  # Blue
-    0, 255, 0  # Green
+# Dither palette mapping to driver/spectra6 palette
+DITHER_TO_DRIVER = np.array([0, 1, 2, 3, 5, 6], dtype=np.uint8)
+
+SPECTRA6_DRIVER_PALETTE = (
+    25, 30, 33,       # 0 Black
+    232, 232, 232,    # 1 Off-White
+    239, 222, 68,     # 2 Yellow
+    178, 19, 24,      # 3 Red
+    25, 30, 33,       # 4 Extra Black (same as black)
+    33, 87, 186,      # 5 Blue
+    18, 95, 32        # 6 Green
 )
 
-SPECTRA6_PALETTE = (
-    25, 30, 33,  # Black
-    232, 232, 232,  # Off-White
-    239, 222, 68,  # Yellow
-    178, 19, 24,  # Red
-    0, 0, 0,  # Extra Black (ignored)
-    33, 87, 186,  # Blue
-    18, 95, 32  # Green
+SPECTRA6_DITHER_PALETTE = (
+    25, 30, 33,       # 0 Black
+    232, 232, 232,    # 1 Off-White
+    239, 222, 68,     # 2 Yellow
+    178, 19, 24,      # 3 Red
+    33, 87, 186,      # 4 Blue
+    18, 95, 32        # 5 Green
 )
+
+# SPECTRA6_DITHER_PALETTE = (
+#     25, 30, 33,  # Black
+#     232, 232, 232,  # Off-White
+#     239, 222, 68,  # Yellow
+#     178, 19, 24,  # Red
+#     0, 0, 0,  # Extra Black (ignored)
+#     33, 87, 186,  # Blue
+#     18, 95, 32  # Green
+# )
 
 
 class ImageCollection(Enum):

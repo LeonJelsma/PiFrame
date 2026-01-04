@@ -26,7 +26,7 @@ disk_image.close()
 # Process image to buffer
 screen = epd13in3E.EPD()
 image = pre_process_image(image, "./test_2.JPEG")
-
+print(image.mode, min(image.getdata()), max(image.getdata()))
 screen.get_buffer(image)
 image.show()
 print('')

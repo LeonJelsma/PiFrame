@@ -2,10 +2,13 @@ import colorsys
 import logging
 import os
 import random
+
+import numpy as np
 import piexif
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter, ImageOps
 
-from piframe.const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_PALETTE
+from piframe.const import DISPLAY_HEIGHT, DISPLAY_WIDTH, FONTS_DIR, SPECTRA6_DITHER_PALETTE, DITHER_TO_DRIVER, \
+    SPECTRA6_DRIVER_PALETTE
 from piframe.utils.akinson_dithering import atkinson_dither
 from piframe.utils.open_street_map_utils import coords_to_address
 
@@ -16,22 +19,17 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Indices after removing duplicates should be:
-# 0 black, 1 off-white, 2 yellow, 3 red, 4 blue, 5 green
-BLACK_IDX = 0
-WHITE_IDX = 1
-
 
 def pre_process_image(image: Image.Image, image_path: str):
     image = correct_image_orientation(image, image_path)
     image = resize_for_spectra6(image)
     # image = enhance_colors(image)
 
-    # palette = unique_palette_flat(
-    #     SPECTRA6_PALETTE)
+    dither_palette = unique_palette_flat(
+        SPECTRA6_DITHER_PALETTE)
 
-    image = atkinson_dither(image, SPECTRA6_PALETTE)
-    # image = convert_to_spectra_palette(image)
+    image = atkinson_dither(image, dither_palette)
+    image = remap_to_driver(image)
 
     return image
 
@@ -45,27 +43,15 @@ def unique_palette_flat(palette_flat: tuple) -> tuple:
     return tuple(v for rgb in uniq for v in rgb)
 
 
-def replace_colors(image: Image.Image, source_palette_flat, target_palette_flat) -> Image.Image:
-    def flat_to_rgb_list(flat):
-        return [tuple(flat[i:i + 3]) for i in range(0, len(flat), 3)]
+def remap_to_driver(img_p: Image.Image) -> Image.Image:
+    idx = np.asarray(img_p, dtype=np.uint8)
 
-    source_palette = flat_to_rgb_list(source_palette_flat)
-    target_palette = flat_to_rgb_list(target_palette_flat)
+    idx2 = DITHER_TO_DRIVER[idx]
+    out = Image.fromarray(idx2, mode="P")
 
-    if len(source_palette) != len(target_palette):
-        raise ValueError("Source and target palettes must have the same number of colors")
-
-    palette_data = image.getpalette()
-    palette_colors = [tuple(palette_data[i:i + 3]) for i in range(0, len(palette_data), 3)]
-
-    color_map = dict(zip(source_palette, target_palette))
-
-    new_palette = []
-    for color in palette_colors:
-        new_palette.extend(color_map.get(color, color))
-
-    image.putpalette(new_palette)
-    return image
+    pal = list(SPECTRA6_DRIVER_PALETTE) + [0, 0, 0] * (256 - 7)
+    out.putpalette(pal)
+    return out
 
 
 def apply_vibrance(
@@ -100,20 +86,6 @@ def apply_gamma(img: Image.Image, gamma) -> Image.Image:
     inv = 1.0 / gamma
     table = [int(((i / 255.0) ** inv) * 255) for i in range(256)]
     return img.point(table * 3)
-
-
-def convert_to_spectra_palette(image: Image.Image):
-    pal_image = Image.new("P", (1, 1))
-    palette = SPECTRA6_PALETTE + (0, 0, 0) * 249  # Fill remaining palette entries
-    pal_image.putpalette(palette)
-
-    # Quantize image to 7 colors with dithering
-    image = image.convert("RGB").quantize(
-        palette=pal_image,
-        dither=Image.NONE
-    )
-
-    return image
 
 
 def enhance_colors(image: Image.Image) -> Image.Image:
