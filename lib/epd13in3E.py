@@ -29,11 +29,8 @@
 import logging
 import time
 
-from PIL import Image
-
-from const import DISPLAY_WIDTH, DISPLAY_HEIGHT, SPECTRA6_COLORS
+from const import DISPLAY_WIDTH, DISPLAY_HEIGHT
 from lib import epdconfig
-from utils.image_utils import convert_to_spectra_palette
 
 logger = logging.getLogger(__name__)
 
