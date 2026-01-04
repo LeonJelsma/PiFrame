@@ -17,7 +17,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-LUT5, PAL_RGB = build_lut_5bit(SPECTRA6_PALETTE)
+LUT5, PAL_RGB = build_lut_5bit(SPECTRA6_COLORS)
 
 # Indices after removing duplicates should be:
 # 0 black, 1 off-white, 2 yellow, 3 red, 4 blue, 5 green
@@ -35,7 +35,7 @@ def pre_process_image(image: Image.Image, image_path: str):
 
     image = atkinson_dither_lut(
         image,
-        SPECTRA6_PALETTE,
+        SPECTRA6_COLORS,
         LUT5,
         PAL_RGB,
         neutral_thresh=10,
