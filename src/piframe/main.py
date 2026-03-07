@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 CURRENT_IMAGE_COLLECTION: ImageCollection = ImageCollection.DEFAULT
 
 next_image_trigger = threading.Event()
+sleeping = threading.Event()
 
 
 @app.post("/next")
@@ -30,6 +31,22 @@ def next_image():
 
     logger.info(f"Received manual trigger to display next image")
     return {"status": "ok"}
+
+
+@app.post("/sleep")
+def sleep_screen():
+    sleeping.set()
+    screen.sleep()
+    logger.info("Screen put to sleep, slideshow paused")
+    return {"status": "ok", "sleeping": True}
+
+
+@app.post("/wake")
+def wake_screen():
+    sleeping.clear()
+    next_image_trigger.set()
+    logger.info("Screen awakened, slideshow resumed")
+    return {"status": "ok", "sleeping": False}
 
 
 @app.post("/collection/{name}")
@@ -55,6 +72,12 @@ def slideshow():
         screen.sleep()
 
         while True:
+            if sleeping.is_set():
+                logger.info("Screen sleeping, waiting for wake signal")
+                while sleeping.is_set():
+                    time.sleep(1)
+                logger.info("Wake signal received")
+
             image, image_path = get_random_image(CURRENT_IMAGE_COLLECTION.path())
             if image is None:
                 print("No images found, waiting...")
