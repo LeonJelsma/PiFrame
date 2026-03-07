@@ -66,6 +66,7 @@ def slideshow():
             image = pre_process_image(image, image_path)
             
             screen.display(screen.get_buffer(image))
+            screen.sleep()
 
             # Free up memory
             del image
@@ -78,8 +79,6 @@ def slideshow():
         # This should not be reachable!
         logger.info("Out of images, clearing screen...")
         screen.Clear()
-
-        logger.info("Going to sleep...")
         screen.sleep()
     except Exception:
         logger.exception("Encountered error, going to sleep")
