@@ -52,6 +52,7 @@ def slideshow():
 
         screen.Init()
         screen.Clear()
+        screen.sleep()
 
         while True:
             image, image_path = get_random_image(CURRENT_IMAGE_COLLECTION.path())
@@ -64,10 +65,9 @@ def slideshow():
 
             # Prepare image
             image = pre_process_image(image, image_path)
-            
-            screen.display(screen.get_buffer(image))
 
-            logger.info("Sending screen to sleep")
+            screen.Init()
+            screen.display(screen.get_buffer(image))
             screen.sleep()
 
             # Free up memory
